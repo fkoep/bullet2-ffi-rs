@@ -1,0 +1,12 @@
+[package]
+name = "bullet2-ffi"
+version = "0.0.0"
+authors = ["Felix Köpge <fkoep@mailbox.org>"]
+license = "MIT"
+
+[dependencies]
+cpp = "0.3"
+libc = "*"
+
+[build-dependencies]
+cpp_build = "0.3"
