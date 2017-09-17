@@ -20,20 +20,16 @@ pub type Transform = [Scalar; 16];
 // ++++++++++++++++++++ Ptr ++++++++++++++++++++
 
 pub struct Ptr<T> {
-    ptr: *mut T
+    ptr: *mut T,
 }
 
 impl<T> Deref for Ptr<T> {
     type Target = T;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*self.ptr }
-    }
+    fn deref(&self) -> &Self::Target { unsafe { &*self.ptr } }
 }
 
 impl<T> DerefMut for Ptr<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe { &mut*self.ptr }
-    }
+    fn deref_mut(&mut self) -> &mut Self::Target { unsafe { &mut *self.ptr } }
 }
 
 // TODO impl<T> Drop for Ptr<T> {
@@ -55,7 +51,7 @@ impl DynamicsWorld {
             return ptr;
         }}
     }
-    pub unsafe fn delete(&self){
+    pub unsafe fn delete(&self) {
         let mut ptr = self;
         cpp!{[mut ptr as "btDiscreteDynamicsWorld *"]{
             auto solver = ptr->getConstraintSolver();
@@ -71,21 +67,31 @@ impl DynamicsWorld {
         }}
     }
 
-    pub unsafe fn step_simulation(&self, dt: Scalar, max_sub_steps: c_int, fixed_step: Scalar){
+    pub unsafe fn step_simulation(
+        &self,
+        dt: Scalar,
+        max_sub_steps: c_int,
+        fixed_step: Scalar,
+    ) {
         let mut ptr = self;
         cpp!{[mut ptr as "btDiscreteDynamicsWorld *", dt as "btScalar", max_sub_steps as "int", fixed_step as "btScalar"]{
             ptr->stepSimulation(dt, max_sub_steps, fixed_step);
         }}
     }
 
-    pub unsafe fn set_gravity(&self, v: Vector){
+    pub unsafe fn set_gravity(&self, v: Vector) {
         let mut ptr = self;
         cpp!{[mut ptr as "btDiscreteDynamicsWorld *", v as "btVector3"]{
             ptr->setGravity(v);
         }}
     }
 
-    pub unsafe fn add_rigid_body(&self, mut body: &RigidBody, group: c_short, mask: c_short){
+    pub unsafe fn add_rigid_body(
+        &self,
+        mut body: &RigidBody,
+        group: c_short,
+        mask: c_short,
+    ) {
         let mut ptr = self;
         cpp!{[
             mut ptr as "btDiscreteDynamicsWorld *", 
@@ -97,7 +103,7 @@ impl DynamicsWorld {
             ptr->addRigidBody(body);
         }}
     }
-    pub unsafe fn remove_rigid_body(&self, mut body: &RigidBody){
+    pub unsafe fn remove_rigid_body(&self, mut body: &RigidBody) {
         let mut ptr = self;
         cpp!{[mut ptr as "btDiscreteDynamicsWorld *", mut body as "btRigidBody *"]{
             ptr->removeRigidBody(body);
@@ -107,7 +113,7 @@ impl DynamicsWorld {
 
 // ++++++++++++++++++++ TriangleMesh ++++++++++++++++++++
 
-/// TODO 
+/// TODO
 ///
 /// * support 16 bit indices?
 pub enum TriangleMesh {}
@@ -120,20 +126,20 @@ impl TriangleMesh {
             ptr->preallocateIndices(prealloc_indices);
         }}
     }
-    pub unsafe fn delete(&self){
+    pub unsafe fn delete(&self) {
         let ptr = self;
         cpp!{[ptr as "btTriangleMesh *"]{
             delete ptr;
         }}
     }
 
-    pub unsafe fn add_triangle(&self, v0: Vector, v1: Vector, v2: Vector){
+    pub unsafe fn add_triangle(&self, v0: Vector, v1: Vector, v2: Vector) {
         let mut ptr = self;
         cpp!{[mut ptr as "btTriangleMesh *", v0 as "btVector3", v1 as "btVector3", v2 as "btVector3"]{
             ptr->addTriangle(v0, v1, v2);
         }}
     }
-    pub unsafe fn add_triangle_indices(&self, i0: c_int, i1: c_int, i2: c_int){
+    pub unsafe fn add_triangle_indices(&self, i0: c_int, i1: c_int, i2: c_int) {
         let mut ptr = self;
         cpp!{[mut ptr as "btTriangleMesh *", i0 as "int", i1 as "int", i2 as "int"]{
             ptr->addTriangleIndices(i0, i1, i2);
@@ -166,7 +172,7 @@ impl CollisionShape {
             return new btBvhTriangleMeshShape(mesh, true);
         }}
     }
-    pub unsafe fn delete(&self){
+    pub unsafe fn delete(&self) {
         let ptr = self;
         cpp!{[ptr as "btCollisionShape *"]{
             btStridingMeshInterface const* tri_mesh_ptr = nullptr;
@@ -190,14 +196,14 @@ impl CollisionShape {
             return inertia;
         }}
     }
-    pub unsafe fn set_margin(&self, v: Scalar){
+    pub unsafe fn set_margin(&self, v: Scalar) {
         let mut ptr = self;
         cpp!{[mut ptr as "btCollisionShape *", v as "btScalar"]{
             ptr->setMargin(v);
         }}
     }
 
-    pub unsafe fn set_user_index(&self, i: c_int){
+    pub unsafe fn set_user_index(&self, i: c_int) {
         let mut ptr = self;
         cpp!{[mut ptr as "btCollisionShape *", i as "int"]{
             ptr->setUserIndex(i);
@@ -226,7 +232,7 @@ impl MotionState {
             return new btDefaultMotionState(t);
         }}
     }
-    pub unsafe fn delete(&self){
+    pub unsafe fn delete(&self) {
         let ptr = self;
         cpp!{[ptr as "btMotionState *"]{
             delete ptr;
@@ -260,15 +266,18 @@ pub struct RigidBodyConstructionInfo<'a> {
 }
 
 impl<'a> RigidBodyConstructionInfo<'a> {
-    pub unsafe fn new(mass: Scalar, mut motion_state: Ptr<MotionState>, mut shape: &'a CollisionShape, local_inertia: Vector) -> Self {
+    pub unsafe fn new(
+        mass: Scalar,
+        mut motion_state: Ptr<MotionState>,
+        mut shape: &'a CollisionShape,
+        local_inertia: Vector,
+    ) -> Self {
         cpp!{[mass as "btScalar", mut motion_state as "btMotionState *", mut shape as "btCollisionShape *", local_inertia as "btVector3"] -> RigidBodyConstructionInfo as "btRigidBody::btRigidBodyConstructionInfo" {
             btRigidBody::btRigidBodyConstructionInfo info(mass, motion_state, shape, local_inertia);
             return info;
         }}
     }
-    pub unsafe fn delete(&self){
-        self.motion_state.delete();
-    }
+    pub unsafe fn delete(&self) { self.motion_state.delete(); }
 }
 
 // ++++++++++++++++++++ RigidBody ++++++++++++++++++++
@@ -282,7 +291,7 @@ impl RigidBody {
             return new btRigidBody(info);
         }}
     }
-    pub unsafe fn delete(&self){
+    pub unsafe fn delete(&self) {
         let ptr = self;
         cpp!{[ptr as "btRigidBody *"]{
             auto motion_state = ptr->getMotionState();
@@ -294,14 +303,14 @@ impl RigidBody {
 
     // ++++++++++++++++++++ CollisionObject ++++++++++++++++++++
 
-    pub unsafe fn set_collision_shape(&self, mut s: &CollisionShape){
+    pub unsafe fn set_collision_shape(&self, mut s: &CollisionShape) {
         let mut ptr = self;
         cpp!{[mut ptr as "btRigidBody *", mut s as "btCollisionShape *"]{
             ptr->setCollisionShape(s);
         }}
     }
 
-    pub unsafe fn set_world_transform(&self, t: Transform){
+    pub unsafe fn set_world_transform(&self, t: Transform) {
         let mut ptr = self;
         cpp!{[mut ptr as "btRigidBody *", t as "btTransform"]{
             ptr->setWorldTransform(t);
@@ -314,7 +323,7 @@ impl RigidBody {
         }}
     }
 
-    pub unsafe fn set_user_index(&self, i: c_int){
+    pub unsafe fn set_user_index(&self, i: c_int) {
         let mut ptr = self;
         cpp!{[mut ptr as "btRigidBody *", i as "int"]{
             ptr->setUserIndex(i);
@@ -328,8 +337,8 @@ impl RigidBody {
     }
 
     // ++++++++++++++++++++ RigidBody ++++++++++++++++++++
- 
-    pub unsafe fn set_linear_velocity(&self, v: Vector){
+
+    pub unsafe fn set_linear_velocity(&self, v: Vector) {
         let mut ptr = self;
         cpp!{[mut ptr as "btRigidBody *", v as "btVector3"]{
             ptr->setLinearVelocity(v);
@@ -342,7 +351,7 @@ impl RigidBody {
         }}
     }
 
-    pub unsafe fn set_angular_velocity(&self, v: Vector){
+    pub unsafe fn set_angular_velocity(&self, v: Vector) {
         let mut ptr = self;
         cpp!{[mut ptr as "btRigidBody *", v as "btVector3"]{
             ptr->setAngularVelocity(v);
@@ -355,10 +364,10 @@ impl RigidBody {
         }}
     }
 
-//     pub unsafe fn translate(&self, v: Vector){
-//         let body = self.clone();
-//         cpp!{[body as "RigidBody", v as "btVector3"]{
-//             body.ptr->translate(v);
-//         }}
-//     }
+    //     pub unsafe fn translate(&self, v: Vector){
+    //         let body = self.clone();
+    //         cpp!{[body as "RigidBody", v as "btVector3"]{
+    //             body.ptr->translate(v);
+    //         }}
+    //     }
 }
